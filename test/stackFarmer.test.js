@@ -50,7 +50,7 @@ contract("stackFarmer", accounts => {
         assert.equal(poolLength.toNumber(), 1, "Incorrect Pool Length")
 
         await stackFarmer.addRewards(1000, { from: accounts[0] })
-        await stackFarmer.deposit(0, 1000, { from: accounts[0] })
+        await stackFarmer.deposit(0, 1000, { from: accounts[0] }) // if BlockNumber = n
 
         userInfo = await stackFarmer.userInfo(0, accounts[0])
         assert.equal(userInfo.amount.toNumber(), 1000, "Invalid Amount Deposited")
@@ -66,10 +66,16 @@ contract("stackFarmer", accounts => {
             await helper.advanceBlock()
         }
 
+        /** 
+         * Block Number = n + 10
+         * Rewards Accumulated in 10 blocks = 10 * 3 = 30
+         * Since User1 is the only user, he gets all rewards.
+         * */ 
+
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 30, "Incorrect Reward")
 
-        await stackFarmer.distributeReward(0, 33, { from: accounts[0] })
+        await stackFarmer.distributeReward(0, 33, { from: accounts[0] }) // Block Number = n + 11, thus rewards = 33
 
         rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 0, "Incorrect Rewards distributed")
