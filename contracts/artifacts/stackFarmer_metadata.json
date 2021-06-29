@@ -622,11 +622,11 @@
 			]
 		},
 		"contracts/stackFarmer.sol": {
-			"keccak256": "0x6440cf47018cb2ea1e6e29eb11a4465ce0498eb329d0be71d921eacc147e002e",
+			"keccak256": "0x5dc7378e4a9785cf1999d0a1aff3fb889320f479296933a834b0bef213f248b4",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://c9e13da6a9086fff4d63b19be462164c587741b7a502d4a381b14f10946c5afb",
-				"dweb:/ipfs/QmZ5Y7un2bFMdk75JhRqGKS3Dn39xQasWAqYnc51A1MdYw"
+				"bzz-raw://73af28bb4fe719d8042c9b441f935ad364c6721f6a5b0033ac9c67667a88076a",
+				"dweb:/ipfs/QmShqd1Ldht7mvEs2QizUDe4Thnpc1qnwkjrqZc4FgPKne"
 			]
 		},
 		"contracts/stackToken.sol": {

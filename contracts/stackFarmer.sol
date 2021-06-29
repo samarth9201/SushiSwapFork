@@ -153,6 +153,16 @@ contract stackFarmer is Ownable {
         else{
             lpSupply = pool.lpToken.balanceOf(address(this));
         }
+
+        if(totalAllocPoint == 0){
+            if(user.amount == 0){
+                return 0;
+            }
+            return user.amount.mul(accStackPerShare).div(1e12).sub(user.rewardDebt);
+        }
+        if(user.amount == 0){
+            return 0;
+        }
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier =
                 getMultiplier(pool.lastRewardBlock, block.number);
@@ -190,6 +200,10 @@ contract stackFarmer is Ownable {
         }
         
         if (lpSupply == 0) {
+            pool.lastRewardBlock = block.number;
+            return;
+        }
+        if(totalAllocPoint == 0){
             pool.lastRewardBlock = block.number;
             return;
         }
