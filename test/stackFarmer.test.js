@@ -377,7 +377,7 @@ contract("stackFarmer", accounts => {
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 30, "Incorrect Reward")
 
-        await stackFarmer.set(0, 0, 1)
+        await stackFarmer.set(0, 0, 1) // Pool ends
 
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 33, "Incorrect Reward")
@@ -439,7 +439,7 @@ contract("stackFarmer", accounts => {
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 30, "Incorrect Reward")
 
-        await stackFarmer.set(0, 0, 1)
+        await stackFarmer.set(0, 0, 1) // Pool Ends
 
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 33, "Incorrect Reward")
@@ -452,7 +452,7 @@ contract("stackFarmer", accounts => {
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 0, "Incorrect Reward")
 
-        await stackFarmer.set(0, 3, 1)
+        await stackFarmer.set(0, 3, 1) // Pool Continues
         await stackFarmer.deposit(0, 1000, { from: accounts[0] })
 
         userInfo = await stackFarmer.userInfo(0, accounts[0])
@@ -471,6 +471,62 @@ contract("stackFarmer", accounts => {
 
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 30, "Incorrect Reward")
+
+        await stackFarmer.withdraw(0, 1000)
+
+        userInfo = await stackFarmer.userInfo(0, accounts[0])
+        assert.equal(userInfo.amount.toNumber(), 0, "Withdraw Unsucessfull")
+    })
+
+    it("Should be able to change Stack Per Block", async () =>{
+
+        await stackFarmer.changeStackPerBlock(30)
+
+        await stackToken.approve(stackFarmer.address, 10000, { from: accounts[0] })
+        await stackFarmer.add(30, stackToken.address, true)
+
+        const totalAllocPoint = await stackFarmer.totalAllocPoint()
+        const poolLength = await stackFarmer.poolLength()
+
+        assert.equal(totalAllocPoint.toNumber(), 30, "Incorrect totalAllocPoint")
+        assert.equal(poolLength.toNumber(), 1, "Incorrect Pool Length")
+
+        await stackFarmer.addRewards(1000, { from: accounts[0] })
+        await stackFarmer.deposit(0, 1000, { from: accounts[0] }) // if BlockNumber = n
+
+        userInfo = await stackFarmer.userInfo(0, accounts[0])
+        assert.equal(userInfo.amount.toNumber(), 1000, "Invalid Amount Deposited")
+
+        const balance = await stackToken.balanceOf(stackFarmer.address)
+        assert.equal(balance.toNumber(), 2000, "Tokens not transferred")
+
+        const depositedRewards = await stackFarmer.rewards()
+        assert.equal(depositedRewards.toNumber(), 1000, "Incorrect Rewards Added")
+
+        // Advance 10 blocks
+        for (i = 0; i < 10; i++) {
+            await helper.advanceBlock()
+        }
+
+        /** 
+         * Block Number = n + 10
+         * Rewards Accumulated in 10 blocks = 10 * 30 = 300
+         * Since User1 is the only user, he gets all rewards.
+         * */
+
+        var rewards = await stackFarmer.pendingStack(0, accounts[0])
+        assert.equal(rewards.toNumber(), 300, "Incorrect Reward")
+
+        await stackFarmer.distributeReward(0, 330, { from: accounts[0] }) // Block Number = n + 11, thus rewards = 33
+
+        rewards = await stackFarmer.pendingStack(0, accounts[0])
+        assert.equal(rewards.toNumber(), 0, "Incorrect Rewards distributed")
+
+        try {
+            await stackFarmer.distributeReward(0, 330, { from: accounts[0] })
+        } catch (error) {
+            assert(error != null)
+        }
 
         await stackFarmer.withdraw(0, 1000)
 

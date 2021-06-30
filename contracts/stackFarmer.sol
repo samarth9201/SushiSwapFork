@@ -90,6 +90,11 @@ contract stackFarmer is Ownable {
         stack.transferFrom(address(msg.sender), address(this), _amount);
         rewards = rewards.add(_amount);
     }
+
+    function changeStackPerBlock(uint256 _stackPerBlock) public onlyOwner{
+        stackPerBlock = _stackPerBlock;
+    }
+    
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     function add(
