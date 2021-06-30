@@ -92,6 +92,7 @@ contract stackFarmer is Ownable {
     }
 
     function changeStackPerBlock(uint256 _stackPerBlock) public onlyOwner{
+        massUpdatePools();
         stackPerBlock = _stackPerBlock;
     }
     

@@ -480,15 +480,13 @@ contract("stackFarmer", accounts => {
 
     it("Should be able to change Stack Per Block", async () =>{
 
-        await stackFarmer.changeStackPerBlock(30)
-
         await stackToken.approve(stackFarmer.address, 10000, { from: accounts[0] })
-        await stackFarmer.add(30, stackToken.address, true)
+        await stackFarmer.add(3, stackToken.address, true)
 
         const totalAllocPoint = await stackFarmer.totalAllocPoint()
         const poolLength = await stackFarmer.poolLength()
 
-        assert.equal(totalAllocPoint.toNumber(), 30, "Incorrect totalAllocPoint")
+        assert.equal(totalAllocPoint.toNumber(), 3, "Incorrect totalAllocPoint")
         assert.equal(poolLength.toNumber(), 1, "Incorrect Pool Length")
 
         await stackFarmer.addRewards(1000, { from: accounts[0] })
@@ -510,27 +508,25 @@ contract("stackFarmer", accounts => {
 
         /** 
          * Block Number = n + 10
-         * Rewards Accumulated in 10 blocks = 10 * 30 = 300
+         * Rewards Accumulated in 10 blocks = 10 * 3 = 30
          * Since User1 is the only user, he gets all rewards.
          * */
 
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
-        assert.equal(rewards.toNumber(), 300, "Incorrect Reward")
+        assert.equal(rewards.toNumber(), 30, "Incorrect Reward")
 
-        await stackFarmer.distributeReward(0, 330, { from: accounts[0] }) // Block Number = n + 11, thus rewards = 33
+        await stackFarmer.changeStackPerBlock(30)
 
-        rewards = await stackFarmer.pendingStack(0, accounts[0])
-        assert.equal(rewards.toNumber(), 0, "Incorrect Rewards distributed")
+        var rewards = await stackFarmer.pendingStack(0, accounts[0])
+        assert.equal(rewards.toNumber(), 33, "Incorrect Reward")
 
-        try {
-            await stackFarmer.distributeReward(0, 330, { from: accounts[0] })
-        } catch (error) {
-            assert(error != null)
+        // Advance 10 blocks
+        for (i = 0; i < 10; i++) {
+            await helper.advanceBlock()
         }
 
-        await stackFarmer.withdraw(0, 1000)
+        rewards = await stackFarmer.pendingStack(0, accounts[0])
+        assert.equal(rewards.toNumber(), 333, "Incorrect Rewards distributed")
 
-        userInfo = await stackFarmer.userInfo(0, accounts[0])
-        assert.equal(userInfo.amount.toNumber(), 0, "Withdraw Unsucessfull")
     })
 })
