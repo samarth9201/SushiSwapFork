@@ -293,7 +293,7 @@ contract stackFarmer is Ownable {
             );
         require(pending <= _amount, "Amount greater than pending rewards.");
         rewards = rewards.sub(_amount);
-        user.rewardDebt = _amount;
+        user.rewardDebt = user.rewardDebt.add(_amount);
         safestackTransfer(address(msg.sender), _amount);
     }
 
