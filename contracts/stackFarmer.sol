@@ -85,17 +85,17 @@ contract stackFarmer is Ownable {
     function poolLength() external view returns (uint256) {
         return poolInfo.length;
     }
-    
-    function addRewards(uint256 _amount) public onlyOwner{
+
+    function addRewards(uint256 _amount) public onlyOwner {
         stack.transferFrom(address(msg.sender), address(this), _amount);
         rewards = rewards.add(_amount);
     }
 
-    function changeStackPerBlock(uint256 _stackPerBlock) public onlyOwner{
+    function changeStackPerBlock(uint256 _stackPerBlock) public onlyOwner {
         massUpdatePools();
         stackPerBlock = _stackPerBlock;
     }
-    
+
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     function add(
@@ -106,8 +106,9 @@ contract stackFarmer is Ownable {
         if (_withUpdate) {
             massUpdatePools();
         }
-        uint256 lastRewardBlock =
-            block.number > startBlock ? block.number : startBlock;
+        uint256 lastRewardBlock = block.number > startBlock
+            ? block.number
+            : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(
             PoolInfo({
@@ -153,29 +154,33 @@ contract stackFarmer is Ownable {
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accStackPerShare = pool.accStackPerShare;
         uint256 lpSupply;
-        if(pool.lpToken == stack){
+        if (pool.lpToken == stack) {
             lpSupply = pool.lpToken.balanceOf(address(this)).sub(rewards);
-        }
-        else{
+        } else {
             lpSupply = pool.lpToken.balanceOf(address(this));
         }
 
-        if(totalAllocPoint == 0){
-            if(user.amount == 0){
+        if (totalAllocPoint == 0) {
+            if (user.amount == 0) {
                 return 0;
             }
-            return user.amount.mul(accStackPerShare).div(1e12).sub(user.rewardDebt);
+            return
+                user.amount.mul(accStackPerShare).div(1e12).sub(
+                    user.rewardDebt
+                );
         }
-        if(user.amount == 0){
+        if (user.amount == 0) {
             return 0;
         }
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-            uint256 multiplier =
-                getMultiplier(pool.lastRewardBlock, block.number);
-            uint256 stackReward =
-                multiplier.mul(stackPerBlock).mul(pool.allocPoint).div(
-                    totalAllocPoint
-                );
+            uint256 multiplier = getMultiplier(
+                pool.lastRewardBlock,
+                block.number
+            );
+            uint256 stackReward = multiplier
+            .mul(stackPerBlock)
+            .mul(pool.allocPoint)
+            .div(totalAllocPoint);
             accStackPerShare = accStackPerShare.add(
                 stackReward.mul(1e12).div(lpSupply)
             );
@@ -198,26 +203,25 @@ contract stackFarmer is Ownable {
             return;
         }
         uint256 lpSupply;
-        if(pool.lpToken == stack){
+        if (pool.lpToken == stack) {
             lpSupply = pool.lpToken.balanceOf(address(this)).sub(rewards);
-        }
-        else{
+        } else {
             lpSupply = pool.lpToken.balanceOf(address(this));
         }
-        
+
         if (lpSupply == 0) {
             pool.lastRewardBlock = block.number;
             return;
         }
-        if(totalAllocPoint == 0){
+        if (totalAllocPoint == 0) {
             pool.lastRewardBlock = block.number;
             return;
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 stackReward =
-            multiplier.mul(stackPerBlock).mul(pool.allocPoint).div(
-                totalAllocPoint
-            );
+        uint256 stackReward = multiplier
+        .mul(stackPerBlock)
+        .mul(pool.allocPoint)
+        .div(totalAllocPoint);
         pool.accStackPerShare = pool.accStackPerShare.add(
             stackReward.mul(1e12).div(lpSupply)
         );
@@ -230,10 +234,11 @@ contract stackFarmer is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
         if (user.amount > 0) {
-            uint256 pending =
-                user.amount.mul(pool.accStackPerShare).div(1e12).sub(
-                    user.rewardDebt
-                );
+            uint256 pending = user
+            .amount
+            .mul(pool.accStackPerShare)
+            .div(1e12)
+            .sub(user.rewardDebt);
             if (pending > 0) {
                 distributeReward(_pid, pending);
             }
@@ -256,12 +261,11 @@ contract stackFarmer is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool(_pid);
-        uint256 pending =
-            user.amount.mul(pool.accStackPerShare).div(1e12).sub(
-                user.rewardDebt
-            );
+        uint256 pending = user.amount.mul(pool.accStackPerShare).div(1e12).sub(
+            user.rewardDebt
+        );
         if (pending > 0) {
-            if(pending < rewards){
+            if (pending < rewards) {
                 distributeReward(_pid, pending);
             }
         }
@@ -269,6 +273,7 @@ contract stackFarmer is Ownable {
             user.amount = user.amount.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
+        user.rewardDebt = user.amount.mul(pool.accStackPerShare).div(1e12);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
@@ -282,18 +287,16 @@ contract stackFarmer is Ownable {
         pool.lpToken.safeTransfer(address(msg.sender), amount);
         emit EmergencyWithdraw(msg.sender, _pid, amount);
     }
-    
-    function distributeReward(uint256 _pid, uint256 _amount) public{
+
+    function distributeReward(uint256 _pid, uint256 _amount) internal {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(_amount <= rewards, "Not enough Rewards");
-        uint256 pending =
-            user.amount.mul(pool.accStackPerShare).div(1e12).sub(
-                user.rewardDebt
-            );
+        uint256 pending = user.amount.mul(pool.accStackPerShare).div(1e12).sub(
+            user.rewardDebt
+        );
         require(pending <= _amount, "Amount greater than pending rewards.");
         rewards = rewards.sub(_amount);
-        user.rewardDebt = user.rewardDebt.add(_amount);
         safestackTransfer(address(msg.sender), _amount);
     }
 

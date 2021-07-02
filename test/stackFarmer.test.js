@@ -75,13 +75,13 @@ contract("stackFarmer", accounts => {
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 30, "Incorrect Reward")
 
-        await stackFarmer.distributeReward(0, 33, { from: accounts[0] }) // Block Number = n + 11, thus rewards = 33
+        await stackFarmer.withdraw(0, 0, { from: accounts[0] }) // Block Number = n + 11, thus rewards = 33
 
         rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 0, "Incorrect Rewards distributed")
 
         try {
-            await stackFarmer.distributeReward(0, 33, { from: accounts[0] })
+            await stackFarmer.withdraw(0, 0, { from: accounts[0] })
         } catch (error) {
             assert(error != null)
         }
@@ -387,7 +387,7 @@ contract("stackFarmer", accounts => {
             await helper.advanceBlock()
         }
 
-        await stackFarmer.distributeReward(0, 33)
+        await stackFarmer.withdraw(0, 0)
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 0, "Incorrect Reward")
 
@@ -566,9 +566,9 @@ contract("stackFarmer", accounts => {
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 30, "Incorrect Reward")
 
-        await stackFarmer.distributeReward(0, 30);
+        await stackFarmer.withdraw(0, 0);
 
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
-        assert.equal(rewards.toNumber(), 3, "Incorrect Reward")
+        assert.equal(rewards.toNumber(), 0, "Incorrect Reward")
     })
 })
