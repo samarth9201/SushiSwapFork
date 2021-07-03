@@ -571,4 +571,57 @@ contract("stackFarmer", accounts => {
         var rewards = await stackFarmer.pendingStack(0, accounts[0])
         assert.equal(rewards.toNumber(), 0, "Incorrect Reward")
     })
+
+    it("Custom Test", async () =>{
+        stackToken = await StackToken.new("LPA", "LPA", web3.utils.toWei('1000000000000000000', 'ether'))
+        stackFarmer = await StackFarmer.new(stackToken.address, web3.utils.toWei('161000000000000000', 'wei'), 0, 0)
+        console.log(`Stack Per Block = ${web3.utils.fromWei('161000000000000000', 'ether')} (161000000000000000 units)`, );
+
+        await stackFarmer.add(0, stackToken.address, true)
+
+        await stackToken.transfer(accounts[1], web3.utils.toWei('4000', 'ether'), { from: accounts[0] })
+
+        const balance = await stackToken.balanceOf(accounts[0])
+
+        await stackToken.approve(stackFarmer.address, balance, { from: accounts[0] })
+        await stackToken.approve(stackFarmer.address, web3.utils.toWei('4000', 'ether'), { from: accounts[1] })
+
+        await stackFarmer.addRewards(web3.utils.toWei('6000', 'ether'))
+
+        await stackFarmer.deposit(0, web3.utils.toWei('4000', 'ether'))
+        var block = await web3.eth.getBlock('latest')
+        console.log(`User 1 deposited 4000 STACK (${web3.utils.toWei('4000', 'ether')} units) at ${block.number}`)
+
+        // Advance 10 blocks
+        for (i = 0; i < 570; i++) {
+            await helper.advanceBlock()
+        }
+
+        await stackFarmer.deposit(0, web3.utils.toWei('4000', 'ether'), {from: accounts[1]})
+        var block = await web3.eth.getBlock('latest')
+        console.log(`User 2 deposited 4000 STACK (${web3.utils.toWei('4000', 'ether')} units) at ${block.number}`)
+
+        // Advance 10 blocks
+        for (i = 0; i < 157; i++) {
+            await helper.advanceBlock()
+        }
+
+        await stackFarmer.set(0, 1, 1)
+
+        var block = await web3.eth.getBlock('latest')
+        console.log("Pool Started at " + block.number)
+
+        // Advance 10 blocks
+        for (i = 0; i < 134; i++) {
+            await helper.advanceBlock()
+        }
+
+        var rewards = await stackFarmer.pendingStack(0, accounts[0])
+        var block = await web3.eth.getBlock('latest')
+        console.log(`At ${block.number}, User 1 rewards : ${web3.utils.fromWei(rewards.toString(), 'ether')} STACK (${rewards.toString()} units)`);
+
+        var rewards = await stackFarmer.pendingStack(0, accounts[1])
+        var block = await web3.eth.getBlock('latest')
+        console.log(`At ${block.number}, User 2 rewards : ${web3.utils.fromWei(rewards.toString(), 'ether')} STACK (${rewards.toString()} units)`);
+    })
 })
